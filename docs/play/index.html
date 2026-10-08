@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tetris, as text</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--bg:#e8ecf1;--panel:#f6f8fa;--ink:#18202b;--muted:#5d6978;--line:#d3dae3;--board:#fbfcfd;--grid:#e4e9ef;--accent:#2f5bd8;--con:#1d2733;--conink:#d6e2f0;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171d26;--panel:#202834;--ink:#e6ecf3;--muted:#93a1b3;--line:#313c4b;--board:#111720;--grid:#1c2531;--accent:#7a9bff;--con:#0d1219;--conink:#c9d7e8}}
+:root[data-theme="dark"]{--bg:#171d26;--panel:#202834;--ink:#e6ecf3;--muted:#93a1b3;--line:#313c4b;--board:#111720;--grid:#1c2531;--accent:#7a9bff;--con:#0d1219;--conink:#c9d7e8}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Bricolage Grotesque",system-ui,sans-serif}
+.wrap{display:grid;grid-template-columns:auto minmax(0,1fr);gap:24px;max-width:1000px;margin:0 auto;padding:20px}
+h1{font-weight:800;font-size:28px;margin:0 0 4px;letter-spacing:-.02em}
+.sub{color:var(--muted);margin:0 0 16px;max-width:60ch}
+.play{display:flex;gap:12px;align-items:flex-start}
+canvas{display:block;border-radius:6px}
+#board{width:300px;max-width:62vw;height:auto;aspect-ratio:1/2;background:var(--board);border:2px solid var(--ink)}
+#side{width:100px;max-width:26vw;height:auto;aspect-ratio:100/400}
+.stats{display:flex;gap:18px;margin-top:10px;font-variant-numeric:tabular-nums}
+.stats b{display:block;font-size:22px;line-height:1.1}
+.stats span{color:var(--muted);font-size:13px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;min-width:0}
+h2{font-size:15px;margin:0 0 8px;font-weight:600}
+pre{margin:0;font:12.5px/1.45 "IBM Plex Mono",ui-monospace,monospace;white-space:pre-wrap;word-break:break-all}
+.con{background:var(--con);color:var(--conink);border-radius:8px;padding:10px 12px}
+#ascii{white-space:pre;word-break:normal;line-height:1.15;letter-spacing:.12em;margin-top:8px}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+button{font:inherit;font-weight:600;font-size:13px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.row{display:flex;gap:6px;margin-top:8px}
+input{flex:1;min-width:0;font:13px "IBM Plex Mono",monospace;color:var(--ink);background:var(--board);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+code{font:12.5px "IBM Plex Mono",monospace;background:var(--bg);padding:1px 4px;border-radius:4px}
+.api{color:var(--muted);font-size:13.5px}.api p{margin:6px 0}
+.scroll{overflow-x:auto}
+@media (max-width:800px){.wrap{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section>
+  <h1>Tetris, as text</h1>
+  <p class="sub">Every state fits on one line, and every move is a named action. Play with the keyboard, or drive it from outside.</p>
+  <div class="play">
+    <canvas id="board" width="300" height="600" aria-label="Tetris board"></canvas>
+    <canvas id="side" width="100" height="400" aria-label="Hold and next pieces"></canvas>
+  </div>
+  <div class="stats"><div><b id="sc">0</b><span>score</span></div><div><b id="ln">0</b><span>lines</span></div><div><b id="lv">1</b><span>level</span></div></div>
+  <div class="row" style="margin-top:12px"><button class="pri" id="reset">Reset</button><button id="auto">Gravity: on</button></div>
+  <p class="sub" style="margin-top:10px;font-size:13px">Keys: ← → move, ↓ down, ↑ or X rotate, Z rotate back, Space drop, C hold.</p>
+</section>
+<section>
+  <div class="card"><h2>Compact state</h2>
+    <div class="con scroll"><pre id="compact"></pre></div>
+    <div class="row"><input id="loadIn" placeholder="Paste a state line to load it" aria-label="State to load"><button id="load">Load state</button></div>
+  </div>
+  <div class="card"><h2>Board view</h2><div class="con"><pre id="ascii"></pre></div></div>
+  <div class="card"><h2>Send actions</h2>
+    <div class="btns" id="btns"></div>
+    <div class="row"><input id="seq" value="l l cw hd" aria-label="Action sequence"><button id="run">Run sequence</button></div>
+    <pre id="log" class="con" style="margin-top:8px;min-height:60px"></pre>
+  </div>
+  <div class="card api"><h2>Driving it from outside</h2>
+    <p>Actions: <code>left right cw ccw down drop hold tick noop</code> (short forms: l r cw ccw d hd hold t).</p>
+    <p>Page API: <code>tetris.step("left")</code> returns <code>{obs, reward, done, valid, cleared}</code>. Also <code>tetris.reset(seed)</code>, <code>tetris.state()</code>, <code>tetris.load(line)</code>, <code>tetris.text()</code>.</p>
+    <p>From an iframe parent or opener: <code>postMessage({type:"tetris", cmd:"step", action:"hd", id:1}, "*")</code>. Commands: step, reset, state, load. The reply is <code>{type:"tetris-reply", id, ...}</code>.</p>
+    <p>Add <code>?auto=0&amp;seed=42</code> to the URL for turn-based, repeatable play with no timer. Add <code>?ws=ws://localhost:8765</code> (or <code>?ws=1</code> when the page is served by the agent script itself) to connect to a local agent server over WebSocket (JSON messages <code>{id, cmd, action}</code>; replies carry the same id).</p>
+    <p>State line: <code>s</code> score, <code>l</code> lines, <code>o</code> over, <code>c</code> piece+rotation@x,y, <code>h</code> hold, <code>hc</code> can hold, <code>q</code> next queue, <code>g</code> rest of the bag, <code>rs</code> RNG state, <code>b</code> board rows top to bottom (empty rows above are dropped).</p>
+  </div>
+</section>
+</div>
+<script>
+(function(){
+const W=10,H=20,T='IJLOSTZ';
+const SH={I:['0000','1111','0000','0000'],J:['100','111','000'],L:['001','111','000'],O:['11','11'],S:['011','110','000'],T:['010','111','000'],Z:['110','011','000']};
+const COL={I:'#38b6c8',J:'#4a63d9',L:'#e8892f',O:'#e5c33a',S:'#5bb55f',T:'#a15bc9',Z:'#dc4b4b'};
+const ALIAS={l:'left',r:'right',left:'left',right:'right',cw:'cw',u:'cw',ccw:'ccw',z:'ccw',d:'down',down:'down',hd:'drop',drop:'drop',hold:'hold',h:'hold',t:'tick',tick:'tick',noop:'noop',n:'noop'};
+const ROT={};
+for(const t of T){let m=SH[t].map(r=>[...r].map(Number)),n=m.length;ROT[t]=[];
+ for(let k=0;k<4;k++){const c=[];m.forEach((r,y)=>r.forEach((v,x)=>v&&c.push([x,y])));ROT[t].push(c);
+  m=m.map((r,i)=>r.map((_,j)=>m[n-1-j][i]));}}
+const size=t=>SH[t].length;
+let G,auto=true,timer=null,logLines=[];
+const q=new URLSearchParams(location.search);
+if(q.get('auto')==='0'||q.get('ws'))auto=false;
+
+function rnd(){G.rs=(G.rs+0x6D2B79F5)>>>0;let t=G.rs;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}
+function draw(){if(!G.bag.length){const a=[...T];for(let i=6;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}G.bag=a}return G.bag.shift()}
+function fill(){while(G.q.length<5)G.q.push(draw())}
+function cells(c,dx=0,dy=0,r=c.r){return ROT[c.t][r].map(([x,y])=>[c.x+x+dx,c.y+y+dy])}
+function fits(c,dx=0,dy=0,r=c.r){return cells(c,dx,dy,r).every(([x,y])=>x>=0&&x<W&&y<H&&(y<0||G.b[y][x]==='.'))}
+function spawn(t){G.cur={t,r:0,x:Math.floor((W-size(t))/2),y:0};if(!fits(G.cur)){G.over=true}}
+function next(){const t=G.q.shift();fill();spawn(t)}
+function level(){return Math.floor(G.lines/10)+1}
+function reset(seed){
+ seed=(seed==null?(Math.random()*4294967296):seed)>>>0;
+ G={b:Array.from({length:H},()=>Array(W).fill('.')),cur:null,hold:null,hc:true,q:[],bag:[],rs:seed,score:0,lines:0,over:false};
+ fill();next();return result(0,true,0)}
+function lock(){
+ cells(G.cur).forEach(([x,y])=>{if(y>=0)G.b[y][x]=G.cur.t});
+ const keep=G.b.filter(r=>r.includes('.')),n=H-keep.length;
+ G.b=Array.from({length:n},()=>Array(W).fill('.')).concat(keep);
+ G.lines+=n;G.score+=[0,100,300,500,800][n]*level();G.hc=true;next();return n}
+function act(a){
+ const c=G.cur;let v=true,cl=0;
+ if(a==='left'||a==='right'){const d=a==='left'?-1:1;if(fits(c,d,0))c.x+=d;else v=false}
+ else if(a==='cw'||a==='ccw'){const r=(c.r+(a==='cw'?1:3))%4;v=false;
+  for(const k of[0,-1,1,-2,2])if(fits(c,k,0,r)){c.x+=k;c.r=r;v=true;break}}
+ else if(a==='down'||a==='tick'){if(fits(c,0,1)){c.y++;if(a==='down')G.score++}else cl=lock()}
+ else if(a==='drop'){let d=0;while(fits(c,0,1)){c.y++;d++}G.score+=2*d;cl=lock()}
+ else if(a==='hold'){if(!G.hc)v=false;else{const t=c.t;
+  if(G.hold){spawn(G.hold)}else next();G.hold=t;G.hc=false}}
+ else if(a!=='noop')v=false;
+ return[v,cl]}
+function result(reward,valid,cleared){return{obs:compact(),reward,done:G.over,valid,cleared}}
+function step(action){
+ const a=ALIAS[String(action).toLowerCase()];
+ if(!a||G.over)return result(0,false,0);
+ const before=G.score,[v,cl]=act(a),r=result(G.score-before,v,cl);render();return r}
+function compact(){
+ const rows=G.b.map(r=>r.join('')),f=rows.findIndex(r=>/[^.]/.test(r)),c=G.cur;
+ return`TETRIS1 s=${G.score} l=${G.lines} o=${+G.over} c=${c.t}${c.r}@${c.x},${c.y} h=${G.hold||'-'} hc=${+G.hc} q=${G.q.join('')} g=${G.bag.join('')||'-'} rs=${G.rs} b=${f<0?'':rows.slice(f).join('/')}`}
+function load(s){
+ try{const p={};s.trim().split(/\s+/).forEach((k,i)=>{if(i){const j=k.indexOf('=');p[k.slice(0,j)]=k.slice(j+1)}});
+  if(!s.trim().startsWith('TETRIS1'))return false;
+  const m=/^([IJLOSTZ])([0-3])@(-?\d+),(-?\d+)$/.exec(p.c||'');if(!m)return false;
+  let rows=p.b?p.b.split('/'):[];if(rows.length>H||rows.some(r=>!/^[.IJLOSTZ]{10}$/.test(r)))return false;
+  rows=Array.from({length:H-rows.length},()=>'.'.repeat(W)).concat(rows);
+  const ok=x=>/^[IJLOSTZ]*$/.test(x);const g=p.g==='-'?'':p.g,qq=p.q||'';
+  if(!ok(g)||!ok(qq)||qq.length<5||(p.h!=='-'&&!/^[IJLOSTZ]$/.test(p.h)))return false;
+  G={b:rows.map(r=>[...r]),cur:{t:m[1],r:+m[2],x:+m[3],y:+m[4]},hold:p.h==='-'?null:p.h,hc:p.hc==='1',q:[...qq],bag:[...g],rs:(+p.rs)>>>0,score:+p.s||0,lines:+p.l||0,over:p.o==='1'};
+  render();return true}catch(e){return false}}
+function text(){
+ const g=G.b.map(r=>r.slice());if(!G.over)cells(G.cur).forEach(([x,y])=>{if(y>=0)g[y][x]=G.cur.t.toLowerCase()});
+ return g.map(r=>r.join('')).join('\n')}
+
+const $=id=>document.getElementById(id),bc=$('board').getContext('2d'),sc=$('side').getContext('2d');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function block(ctx,x,y,s,col,a){ctx.globalAlpha=a||1;ctx.fillStyle=col;ctx.fillRect(x+1,y+1,s-2,s-2);ctx.globalAlpha=(a||1)*.35;ctx.fillStyle='#fff';ctx.fillRect(x+1,y+1,s-2,4);ctx.globalAlpha=1}
+function mini(t,ox,oy,s){const c=ROT[t][0],xs=c.map(p=>p[0]),ys=c.map(p=>p[1]);
+ const w=Math.max(...xs)-Math.min(...xs)+1,h=Math.max(...ys)-Math.min(...ys)+1;
+ const dx=ox+(100-w*s)/2-Math.min(...xs)*s,dy=oy+(46-h*s)/2-Math.min(...ys)*s;
+ c.forEach(([x,y])=>block(sc,dx+x*s,dy+y*s,s,COL[t]))}
+function render(){
+ const S=30,grid=css('--grid'),ink=css('--ink'),mut=css('--muted');
+ bc.clearRect(0,0,300,600);bc.strokeStyle=grid;bc.lineWidth=1;bc.beginPath();
+ for(let i=1;i<W;i++){bc.moveTo(i*S+.5,0);bc.lineTo(i*S+.5,600)}
+ for(let i=1;i<H;i++){bc.moveTo(0,i*S+.5);bc.lineTo(300,i*S+.5)}bc.stroke();
+ G.b.forEach((r,y)=>r.forEach((v,x)=>{if(v!=='.')block(bc,x*S,y*S,S,COL[v])}));
+ if(!G.over){let d=0;while(fits(G.cur,0,d+1))d++;
+  cells(G.cur,0,d).forEach(([x,y])=>{bc.strokeStyle=COL[G.cur.t];bc.lineWidth=2;bc.strokeRect(x*S+2,y*S+2,S-4,S-4)});
+  cells(G.cur).forEach(([x,y])=>{if(y>=0)block(bc,x*S,y*S,S,COL[G.cur.t])})}
+ else{bc.fillStyle='rgba(20,28,40,.78)';bc.fillRect(0,230,300,120);bc.fillStyle='#fff';bc.font='800 28px "Bricolage Grotesque",sans-serif';bc.textAlign='center';bc.fillText('Game over',150,282);bc.font='500 14px sans-serif';bc.fillText('Press Reset to play again',150,310);bc.textAlign='start'}
+ sc.clearRect(0,0,100,400);sc.fillStyle=mut;sc.font='600 13px "Bricolage Grotesque",sans-serif';
+ sc.fillText('Hold',4,14);if(G.hold){sc.globalAlpha=G.hc?1:.35;mini(G.hold,0,20,18);sc.globalAlpha=1}
+ sc.fillStyle=mut;sc.fillText('Next',4,92);G.q.forEach((t,i)=>mini(t,0,98+i*58,i?16:20));
+ $('sc').textContent=G.score;$('ln').textContent=G.lines;$('lv').textContent=level();
+ $('compact').textContent=compact();$('ascii').textContent=text().replace(/\./g,'·').replace(/(.)/g,(m)=>m)}
+function log(s){logLines.push(s);if(logLines.length>8)logLines.shift();$('log').textContent=logLines.join('\n')}
+function exec(a){const r=step(a);log(`${a} → reward ${r.reward}${r.valid?'':' (no effect)'}${r.cleared?' lines '+r.cleared:''}${r.done?' (game over)':''}`);return r}
+
+function loop(){clearTimeout(timer);if(!auto)return;
+ timer=setTimeout(()=>{if(!G.over)step('tick');loop()},Math.max(90,800-(level()-1)*70))}
+function setAuto(v){auto=v;$('auto').textContent='Gravity: '+(v?'on':'off');loop()}
+
+const api={step,reset:s=>{const r=reset(s);render();logLines=[];$('log').textContent='';loop();return r},state:()=>({obs:compact(),text:text(),score:G.score,lines:G.lines,level:level(),done:G.over}),load,text,compact,setAuto};
+window.tetris=api;
+function handle(d){let r;
+ if(d.cmd==='step')r=api.step(d.action);else if(d.cmd==='reset')r=api.reset(d.seed);
+ else if(d.cmd==='state')r=api.state();else if(d.cmd==='load')r={ok:api.load(String(d.state)),obs:compact()};
+ else r={error:'unknown cmd'};return r}
+window.addEventListener('message',e=>{const d=e.data;if(!d||d.type!=='tetris')return;
+ (e.source||parent).postMessage(Object.assign({type:'tetris-reply',id:d.id},handle(d)),'*')});
+if(q.get('ws')){const wsUrl=q.get('ws')==='1'?(location.protocol==='https:'?'wss://':'ws://')+location.host:q.get('ws');
+ const connect=()=>{const ws=new WebSocket(wsUrl);
+ ws.onopen=()=>log('agent connected');
+ ws.onmessage=e=>{let d;try{d=JSON.parse(e.data)}catch(_){return}
+  const r=handle(d);if(d.cmd==='step')log('agent: '+d.action+' → reward '+r.reward);
+  ws.send(JSON.stringify(Object.assign({id:d.id},r)))};
+ ws.onclose=()=>{log('agent disconnected, retrying');setTimeout(connect,1000)}};connect()}
+
+[['left','←'],['right','→'],['cw','Rotate'],['ccw','Rotate back'],['down','Down'],['drop','Drop'],['hold','Hold'],['tick','Tick']].forEach(([a,l])=>{
+ const b=document.createElement('button');b.textContent=l;b.title=a;b.onclick=()=>exec(a);$('btns').appendChild(b)});
+$('reset').onclick=()=>api.reset();
+$('auto').onclick=()=>setAuto(!auto);
+$('run').onclick=()=>{$('seq').value.split(/[\s,]+/).filter(Boolean).forEach(exec)};
+$('load').onclick=()=>{const ok=load($('loadIn').value);log(ok?'state loaded':'could not parse that state line')};
+document.addEventListener('keydown',e=>{
+ if(e.target.tagName==='INPUT')return;
+ const k={ArrowLeft:'left',ArrowRight:'right',ArrowDown:'down',ArrowUp:'cw',x:'cw',X:'cw',z:'ccw',Z:'ccw',' ':'drop',c:'hold',C:'hold'}[e.key];
+ if(k){e.preventDefault();exec(k)}});
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',render);
+
+reset(q.get('seed')!=null?+q.get('seed'):null);render();setAuto(auto);
+})();
+</script>
+</body>
+</html>

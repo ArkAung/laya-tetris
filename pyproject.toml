@@ -1,0 +1,15 @@
+[project]
+name = "laya-tetris"
+version = "0.1.0"
+description = "Teaching a small decision model (Laya) to play Tetris: failures, evals, and a fine-tune that works"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = ["laya-mlx"]
+
+[project.optional-dependencies]
+playwright = ["playwright"]   # only for laya_tetris_web.py, the browser-automation runner
+torch = ["laya"]              # only for --backend torch
+
+[tool.uv]
+package = false
