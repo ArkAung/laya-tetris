@@ -254,16 +254,19 @@
       with these types of models.
       Looking around, there are a couple of cool options for System 1 decision models such as, Kev, Laya and CLM. These
       are not your usual
-      autoregressive language models which generate text token-by-token. These are types of models which were you ask
-      questions based on your state and it will make choices depending on what you have provided as candidates in your
+      autoregressive language models which generate text token-by-token. These are types of models which you ask
+      questions based on the observed state and it will make choices depending on what you have provided as candidates
+      in your
       questions.
       These models can run pretty fast on my M3 Max Macbook Pro as well, mainly because the model I am choosing has only
       451M parameters.
 
-      So all in all, I want these decision models to 1) see the tetris board, 2) pieces which are coming down the board,
-      and 3) take actions to clear the rows
+      So all in all, I want these decision models to 1) see the tetris board and pieces which are coming down the board
+      and
+      and 2) take actions to move the pieces left or right, or rotate them, with the ultimate goal of clearing the rows.
     </p>
-    <p>I, with the help of coding agents, built Tetris so that the game state fits on one line of text. Not only that
+    <p>And so, I, with the help of coding agents, built Tetris so that the game state fits on one line of text. Not only
+      that
       every action that can be taken has a name, like <code>left</code>
       or <code>drop</code>, which means that anything that is able to send text can play the game. You can go ahead and
       play the <a href="play/">web version here</a>. In the repo, there is a Python version for training but both of
