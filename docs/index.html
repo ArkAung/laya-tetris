@@ -247,18 +247,30 @@
         game</a></p>
 
     <h1>What I learned trying to get a small decision model to play Tetris</h1>
-    <p class="sub">A record of the things that did not work, and the fine-tune that did.</p>
 
     <h2>1. The game</h2>
-    <p>I wanted to see whether a small model could play Tetris. The model I picked, Laya, is not a language model, since
-      you describe a situation, list the possible answers, and it returns a probability for each one in about 25
-      milliseconds on my Mac. That seemed like the right shape for the job, because every time a piece appears you have
-      to choose among a handful of places to put it.</p>
-    <p>I wrote Tetris so that the whole game fits on one line of text and every move has a name, like <code>left</code>
-      or <code>drop</code>, which means that anything able to send text can play it. The line includes the state of the
-      random number generator, so pasting it back in resumes a game exactly where it stopped. There is a <a
-        href="play/">web version you can play</a> and a Python copy for training, both using the same generator so that
-      a seed gives the same game in either. A state looks like the line below.</p>
+    <p>I wanted to see whether a relatively small System 1 decision model could play Tetris. It all started out because
+      of Jev. Jev was all the rage and classifiers are cool again. So, it is only fair for me to do something useless
+      with these types of models.
+      Looking around, there are a couple of cool options for System 1 decision models such as, Kev, Laya and CLM. These
+      are not your usual
+      autoregressive language models which generate text token-by-token. These are types of models which were you ask
+      questions based on your state and it will make choices depending on what you have provided as candidates in your
+      questions.
+      These models can run pretty fast on my M3 Max Macbook Pro as well, mainly because the model I am choosing has only
+      451M parameters.
+
+      So all in all, I want these decision models to 1) see the tetris board, 2) pieces which are coming down the board,
+      and 3) take actions to clear the rows
+    </p>
+    <p>I, with the help of coding agents, built Tetris so that the game state fits on one line of text. Not only that
+      every action that can be taken has a name, like <code>left</code>
+      or <code>drop</code>, which means that anything that is able to send text can play the game. You can go ahead and
+      play the <a href="play/">web version here</a>. In the repo, there is a Python version for training but both of
+      these versions use the
+      same generator so that we can play seeded games to reliably replicate certain games. A state of the game looks
+      something like the line
+      below.</p>
     <pre><code>TETRIS1 s=0 l=0 o=0 c=O0@4,0 h=- hc=1 q=JITZL g=S rs=2399460328 b=</code></pre>
 
     <h2>2. The first attempt</h2>
