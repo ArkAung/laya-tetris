@@ -73,24 +73,6 @@ uv run ablations.py --tuned path/to/model --only F
 `data_sample/` holds 60 rows so you can see the format without generating anything. `notes/journey-notes.md` has every number
 from the experiments, in order. Unit tests (no model needed): `python -m unittest discover -s tests -v`.
 
-## Files
-
-| File | What it is |
-|---|---|
-| `laya_tetris.py` | Game engine, heuristic teacher, `play_turn`, all the pick strategies, terminal runner |
-| `tetris-env.html` | The web game: keyboard play, text state, JS / postMessage / WebSocket control |
-| `laya_tetris_ws.py` | Serves the page and lets a model play it over a WebSocket (standard library only) |
-| `laya_tetris_web.py` | Same idea, driving the page with Playwright (optional extra) |
-| `make_tetris_dataset.py` | Builds the fine-tuning set; can relabel states from `--trace` files for on-policy rounds |
-| `eval_laya.py` | The offline experiments: agreement with the heuristic, position bias, pairwise accuracy by gap |
-| `record_gif.py` | Records any player's game as a GIF, drawn straight from the game state; `scripts/record_gifs.sh` makes the whole set |
-| `ablations.py` | Re-runs each thing that went wrong at several levels, on the same boards (state, option text, option count, averaging, raw moves, what the tuned model reads) |
-| `docs/` | The blog post for GitHub Pages (`index.html`), the GIFs in `docs/img/`, and the playable game at `docs/play/` |
-| `scripts/build_post.py` | Builds `docs/index.html` from `scripts/post_template.html`, adding each GIF that exists |
-| `scripts/lint_prose.py` | Checks the post against `notes/style-guide.md` (dashes, parentheses, fragments, banned words) |
-| `scripts/split_for_hf.py` | Splits the dataset for the Hugging Face dataset page |
-| `hf/` | The model card and dataset card |
-
 ## Limitations
 
 - The tuned model depends on our code building the option table. It is not a general Tetris player, and it was only tested
@@ -99,11 +81,6 @@ from the experiments, in order. Unit tests (no model needed): `python -m unittes
 - Tested on a Mac with `laya-mlx` only.
 - A harder follow-up, not done: put the board itself in the state and let the model choose raw moves, as in the
   [Snake demo](https://huggingface.co/madhavbiplov/laya-snake-mlx).
-
-## Credits
-
-Laya by [Convai Innovations](https://huggingface.co/convaiinnovations/laya) (Apache-2.0), `laya-mlx` by `aac6fef`, and
-[LayaStudio](https://github.com/biplovgautam/LayaStudio). The Snake demo showed this route works on a laptop.
 
 ## License
 
