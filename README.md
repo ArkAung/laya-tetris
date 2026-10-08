@@ -70,9 +70,6 @@ uv run ablations.py --n 300
 uv run ablations.py --tuned path/to/model --only F
 ```
 
-`data_sample/` holds 60 rows so you can see the format without generating anything. `notes/journey-notes.md` has every number
-from the experiments, in order. Unit tests (no model needed): `python -m unittest discover -s tests -v`.
-
 ## Limitations
 
 - The tuned model depends on our code building the option table. It is not a general Tetris player, and it was only tested
