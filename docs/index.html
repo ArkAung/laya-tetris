@@ -1,70 +1,275 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>What I learned trying to get a small decision model to play Tetris</title>
-<meta name="description" content="A record of the things that did not work, and the fine-tune that did.">
-<meta property="og:title" content="What I learned trying to get a small decision model to play Tetris">
-<meta property="og:description" content="A record of the things that did not work, and the fine-tune that did.">
-<meta property="og:type" content="article">
-<style>
-  :root { --ink:#20242b; --muted:#5f6a77; --line:#e3e7ec; --paper:#fdfdfb; --code:#f2f4f7; --accent:#2f5bd8; }
-  * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
-  body { margin:0; background:var(--paper); color:var(--ink);
-         font: 19px/1.68 "Iowan Old Style","Palatino Linotype",Palatino,Charter,Georgia,serif; }
-  main { max-width: 690px; margin: 0 auto; padding: 44px 20px 90px; }
-  h1, h2, .sub, figcaption, table, .nav { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
-  h1 { font-size: clamp(30px, 6vw, 42px); line-height: 1.15; letter-spacing: -0.02em; margin: 6px 0 10px; }
-  .sub { font-size: 20px; color: var(--muted); margin: 0 0 34px; }
-  .nav { font-size: 14px; color: var(--muted); }
-  h2 { font-size: 23px; line-height: 1.25; letter-spacing: -0.01em; margin: 54px 0 4px; }
-  p { margin: 16px 0; }
-  a { color: var(--accent); text-underline-offset: 3px; }
-  code, pre { font: 14.5px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
-  code { background: var(--code); padding: 1px 5px; border-radius: 4px; }
-  pre { background: var(--code); padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 18px 0; }
-  pre code { background: none; padding: 0; }
-  pre.wrap { white-space: pre-wrap; word-break: break-word; }
-  ol { padding-left: 24px; margin: 16px 0; } ol li { margin: 10px 0; }
-  .gifs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin: 26px 0; }
-  .gifs figure { margin: 0; }
-  .gifs img { image-rendering: auto; background: #fff; }
-  .nav a { margin-right: 4px; }
-  table { border-collapse: collapse; width: 100%; font-size: 16px; margin: 20px 0; }
-  th, td { text-align: left; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { font-weight: 600; color: var(--muted); font-size: 14px; }
-  td.n, th.n { text-align: right; padding-right: 14px; font-variant-numeric: tabular-nums; }
-  figure { margin: 26px 0; }
-  figure img, figure svg { display: block; width: 100%; height: auto; border-radius: 8px; }
-  figure img { border: 1px solid var(--line); }
-  figcaption { font-size: 14px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
-  svg.ch text { font: 12.5px ui-sans-serif, system-ui, sans-serif; fill: #4b5563; }
-  svg.ch text.val { font-weight: 600; fill: #20242b; }
-  svg.ch text.lab { font-size: 13px; }
-  ul { padding-left: 22px; margin: 16px 0; } li { margin: 8px 0; }
-  hr { border: 0; border-top: 1px solid var(--line); margin: 56px 0 22px; }
-  footer { font: 14px/1.6 ui-sans-serif, system-ui, sans-serif; color: var(--muted); }
-  @media (max-width: 520px) { body { font-size: 18px; } main { padding-top: 28px; } }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>What I learned trying to get a small decision model to play Tetris</title>
+  <meta name="description" content="A record of the things that did not work, and the fine-tune that did.">
+  <meta property="og:title" content="What I learned trying to get a small decision model to play Tetris">
+  <meta property="og:description" content="A record of the things that did not work, and the fine-tune that did.">
+  <meta property="og:type" content="article">
+  <style>
+    :root {
+      --ink: #20242b;
+      --muted: #5f6a77;
+      --line: #e3e7ec;
+      --paper: #fdfdfb;
+      --code: #f2f4f7;
+      --accent: #2f5bd8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font: 19px/1.68 "Iowan Old Style", "Palatino Linotype", Palatino, Charter, Georgia, serif;
+    }
+
+    main {
+      max-width: 690px;
+      margin: 0 auto;
+      padding: 44px 20px 90px;
+    }
+
+    h1,
+    h2,
+    .sub,
+    figcaption,
+    table,
+    .nav {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    h1 {
+      font-size: clamp(30px, 6vw, 42px);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      margin: 6px 0 10px;
+    }
+
+    .sub {
+      font-size: 20px;
+      color: var(--muted);
+      margin: 0 0 34px;
+    }
+
+    .nav {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    h2 {
+      font-size: 23px;
+      line-height: 1.25;
+      letter-spacing: -0.01em;
+      margin: 54px 0 4px;
+    }
+
+    p {
+      margin: 16px 0;
+    }
+
+    a {
+      color: var(--accent);
+      text-underline-offset: 3px;
+    }
+
+    code,
+    pre {
+      font: 14.5px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    code {
+      background: var(--code);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    pre {
+      background: var(--code);
+      padding: 14px 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 18px 0;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+    }
+
+    pre.wrap {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    ol {
+      padding-left: 24px;
+      margin: 16px 0;
+    }
+
+    ol li {
+      margin: 10px 0;
+    }
+
+    .gifs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
+      margin: 26px 0;
+    }
+
+    .gifs figure {
+      margin: 0;
+    }
+
+    .gifs img {
+      image-rendering: auto;
+      background: #fff;
+    }
+
+    .nav a {
+      margin-right: 4px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 16px;
+      margin: 20px 0;
+    }
+
+    th,
+    td {
+      text-align: left;
+      padding: 8px 10px 8px 0;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th {
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    td.n,
+    th.n {
+      text-align: right;
+      padding-right: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    figure {
+      margin: 26px 0;
+    }
+
+    figure img,
+    figure svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    figure img {
+      border: 1px solid var(--line);
+    }
+
+    figcaption {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    svg.ch text {
+      font: 12.5px ui-sans-serif, system-ui, sans-serif;
+      fill: #4b5563;
+    }
+
+    svg.ch text.val {
+      font-weight: 600;
+      fill: #20242b;
+    }
+
+    svg.ch text.lab {
+      font-size: 13px;
+    }
+
+    ul {
+      padding-left: 22px;
+      margin: 16px 0;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid var(--line);
+      margin: 56px 0 22px;
+    }
+
+    footer {
+      font: 14px/1.6 ui-sans-serif, system-ui, sans-serif;
+      color: var(--muted);
+    }
+
+    @media (max-width: 520px) {
+      body {
+        font-size: 18px;
+      }
+
+      main {
+        padding-top: 28px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<main>
+  <main>
 
-<p class="nav"><a href="https://github.com/YOUR_GITHUB_USER/laya-tetris">repo</a> &middot; <a href="https://huggingface.co/YOUR_HF_USER/laya-tetris-placement">model</a> &middot; <a href="https://huggingface.co/datasets/YOUR_HF_USER/laya-tetris-decisions">dataset</a> &middot; <a href="play/">play the game</a></p>
+    <p class="nav"><a href="https://github.com/arkaung/laya-tetris">repo</a> &middot; <a
+        href="https://huggingface.co/aaung/laya-tetris-placement">model</a> &middot; <a
+        href="https://huggingface.co/datasets/aaung/laya-tetris-decisions">dataset</a> &middot; <a href="play/">play the
+        game</a></p>
 
-<h1>What I learned trying to get a small decision model to play Tetris</h1>
-<p class="sub">A record of the things that did not work, and the fine-tune that did.</p>
+    <h1>What I learned trying to get a small decision model to play Tetris</h1>
+    <p class="sub">A record of the things that did not work, and the fine-tune that did.</p>
 
-<h2>1. The game</h2>
-<p>I wanted to see whether a small model could play Tetris. The model I picked, Laya, is not a language model, since you describe a situation, list the possible answers, and it returns a probability for each one in about 25 milliseconds on my Mac. That seemed like the right shape for the job, because every time a piece appears you have to choose among a handful of places to put it.</p>
-<p>I wrote Tetris so that the whole game fits on one line of text and every move has a name, like <code>left</code> or <code>drop</code>, which means that anything able to send text can play it. The line includes the state of the random number generator, so pasting it back in resumes a game exactly where it stopped. There is a <a href="play/">web version you can play</a> and a Python copy for training, both using the same generator so that a seed gives the same game in either. A state looks like the line below.</p>
-<pre><code>TETRIS1 s=0 l=0 o=0 c=O0@4,0 h=- hc=1 q=JITZL g=S rs=2399460328 b=</code></pre>
+    <h2>1. The game</h2>
+    <p>I wanted to see whether a small model could play Tetris. The model I picked, Laya, is not a language model, since
+      you describe a situation, list the possible answers, and it returns a probability for each one in about 25
+      milliseconds on my Mac. That seemed like the right shape for the job, because every time a piece appears you have
+      to choose among a handful of places to put it.</p>
+    <p>I wrote Tetris so that the whole game fits on one line of text and every move has a name, like <code>left</code>
+      or <code>drop</code>, which means that anything able to send text can play it. The line includes the state of the
+      random number generator, so pasting it back in resumes a game exactly where it stopped. There is a <a
+        href="play/">web version you can play</a> and a Python copy for training, both using the same generator so that
+      a seed gives the same game in either. A state looks like the line below.</p>
+    <pre><code>TETRIS1 s=0 l=0 o=0 c=O0@4,0 h=- hc=1 q=JITZL g=S rs=2399460328 b=</code></pre>
 
-<h2>2. The first attempt</h2>
-<p>I started from the assumption that the model would need to see the board. The state therefore began with a short summary of the falling piece, the next pieces, the height of each column and the number of holes, followed by the board as rows of letters. For the options I did not offer raw moves, because the model would have to imagine what each one does to the stack. Instead my code worked out every place the piece could land, kept the eight best, and described each by what would happen there. The shortlist comes from a hand-written heuristic that scores a landing spot on lines cleared, holes, bumpiness and height, and it serves as the answer key throughout. The block below is what the model saw, with four of the eight options shown.</p>
-<pre class="wrap"><code>Tetris. Piece I, next JZTIO, hold none. Column heights 3 3 1 1 1 2 1 0 0 0. Holes 0. Score 846, lines 4. Board top to bottom: OO......../OO...T..../SLLJTTT...
+    <h2>2. The first attempt</h2>
+    <p>I started from the assumption that the model would need to see the board. The state therefore began with a short
+      summary of the falling piece, the next pieces, the height of each column and the number of holes, followed by the
+      board as rows of letters. For the options I did not offer raw moves, because the model would have to imagine what
+      each one does to the stack. Instead my code worked out every place the piece could land, kept the eight best, and
+      described each by what would happen there. The shortlist comes from a hand-written heuristic that scores a landing
+      spot on lines cleared, holes, bumpiness and height, and it serves as the answer key throughout. The block below is
+      what the model saw, with four of the eight options shown.</p>
+    <pre class="wrap"><code>Tetris. Piece I, next JZTIO, hold none. Column heights 3 3 1 1 1 2 1 0 0 0. Holes 0. Score 846, lines 4. Board top to bottom: OO......../OO...T..../SLLJTTT...
 
 Where should the piece be placed? Prefer clearing lines, then no holes, then a low flat surface.
 column 0, rotated 1: clears 0, holes 0, height 7
@@ -72,81 +277,293 @@ column 2, rotated 1: clears 0, holes 0, height 5
 column 9, rotated 1: clears 0, holes 0, height 4
 column 4, rotated 1: clears 0, holes 0, height 5
 ...</code></pre>
-<p>Whole games are slow and noisy to evaluate, so I measured how often the model picked the same option as the heuristic on 300 board positions. Chance on the real shortlist is 15% and the model reached about 21%, which is close enough that I began looking for my own mistake.</p>
+    <p>Whole games are slow and noisy to evaluate, so I measured how often the model picked the same option as the
+      heuristic on 300 board positions. Chance on the real shortlist is 15% and the model reached about 21%, which is
+      close enough that I began looking for my own mistake.</p>
 
-<h2>3. Suspect: the board</h2>
-<p>The first suspect was the one I was surest about, so I changed only how the board was shown. The table gives the share of right answers on a two-option test, where one option is clearly the best and the other clearly the worst, and on the real shortlist of eight.</p>
-<table>
-  <tr><th>State shown to the model</th><th class="n">Two options</th><th class="n">Eight options</th></tr>
-  <tr><td>The word "Tetris" only</td><td class="n">53%</td><td class="n">15%</td></tr>
-  <tr><td>Summary only</td><td class="n">74%</td><td class="n">24%</td></tr>
-  <tr><td>Summary and the board as letters</td><td class="n">66%</td><td class="n">21%</td></tr>
-  <tr><td>Summary and the board as # and .</td><td class="n">71%</td><td class="n">20%</td></tr>
-</table>
-<p>A summary of heights and holes helped a great deal, since replacing the whole state with one word took the easy test down to 53%, and adding the board made it slightly worse. On the real shortlist the three versions with a summary sat within four points of each other, so I suspect the model was mostly ignoring the picture of the board, which was the first hint that it might matter less than I had assumed.</p>
+    <h2>3. Suspect: the board</h2>
+    <p>The first suspect was the one I was surest about, so I changed only how the board was shown. The table gives the
+      share of right answers on a two-option test, where one option is clearly the best and the other clearly the worst,
+      and on the real shortlist of eight.</p>
+    <table>
+      <tr>
+        <th>State shown to the model</th>
+        <th class="n">Two options</th>
+        <th class="n">Eight options</th>
+      </tr>
+      <tr>
+        <td>The word "Tetris" only</td>
+        <td class="n">53%</td>
+        <td class="n">15%</td>
+      </tr>
+      <tr>
+        <td>Summary only</td>
+        <td class="n">74%</td>
+        <td class="n">24%</td>
+      </tr>
+      <tr>
+        <td>Summary and the board as letters</td>
+        <td class="n">66%</td>
+        <td class="n">21%</td>
+      </tr>
+      <tr>
+        <td>Summary and the board as # and .</td>
+        <td class="n">71%</td>
+        <td class="n">20%</td>
+      </tr>
+    </table>
+    <p>A summary of heights and holes helped a great deal, since replacing the whole state with one word took the easy
+      test down to 53%, and adding the board made it slightly worse. On the real shortlist the three versions with a
+      summary sat within four points of each other, so I suspect the model was mostly ignoring the picture of the board,
+      which was the first hint that it might matter less than I had assumed.</p>
 
-<h2>4. Suspect: the options</h2>
-<p>That left the way the options were written, and the table gives the same two measures for six descriptions of the same placements.</p>
-<table>
-  <tr><th>How each option was written</th><th class="n">Two options</th><th class="n">Eight options</th></tr>
-  <tr><td>Column and rotation only</td><td class="n">48%</td><td class="n">20%</td></tr>
-  <tr><td>Column, rotation and numbers</td><td class="n">74%</td><td class="n">24%</td></tr>
-  <tr><td>The same in plain English</td><td class="n">68%</td><td class="n">21%</td></tr>
-  <tr><td>Letters and numbers, with holes shown as a change</td><td class="n">50%</td><td class="n">14%</td></tr>
-  <tr><td>Letters and numbers</td><td class="n">86%</td><td class="n">26%</td></tr>
-  <tr><td>Letters, numbers and a bumpiness figure</td><td class="n">96%</td><td class="n">21%</td></tr>
-</table>
-<p>With the numbers removed the model scored what guessing scores, so the numbers were the only thing it was reading. It read them better once I labelled the options with letters and dropped the column and rotation words, and better again with a bumpiness figure added. On the real shortlist, though, no version did better than 26%, so whatever the model had learned to read, it could not use it to separate options that were close in quality.</p>
+    <h2>4. Suspect: the options</h2>
+    <p>That left the way the options were written, and the table gives the same two measures for six descriptions of the
+      same placements.</p>
+    <table>
+      <tr>
+        <th>How each option was written</th>
+        <th class="n">Two options</th>
+        <th class="n">Eight options</th>
+      </tr>
+      <tr>
+        <td>Column and rotation only</td>
+        <td class="n">48%</td>
+        <td class="n">20%</td>
+      </tr>
+      <tr>
+        <td>Column, rotation and numbers</td>
+        <td class="n">74%</td>
+        <td class="n">24%</td>
+      </tr>
+      <tr>
+        <td>The same in plain English</td>
+        <td class="n">68%</td>
+        <td class="n">21%</td>
+      </tr>
+      <tr>
+        <td>Letters and numbers, with holes shown as a change</td>
+        <td class="n">50%</td>
+        <td class="n">14%</td>
+      </tr>
+      <tr>
+        <td>Letters and numbers</td>
+        <td class="n">86%</td>
+        <td class="n">26%</td>
+      </tr>
+      <tr>
+        <td>Letters, numbers and a bumpiness figure</td>
+        <td class="n">96%</td>
+        <td class="n">21%</td>
+      </tr>
+    </table>
+    <p>With the numbers removed the model scored what guessing scores, so the numbers were the only thing it was
+      reading. It read them better once I labelled the options with letters and dropped the column and rotation words,
+      and better again with a bumpiness figure added. On the real shortlist, though, no version did better than 26%, so
+      whatever the model had learned to read, it could not use it to separate options that were close in quality.</p>
 
-<h2>5. Suspect: the model's habits</h2>
-<p>The reason for dropping the column and rotation words came from a separate test, in which I shuffled the options before every question so that position carried no information. A model that reads the options should pick each slot equally often, and this one favoured the early slots. It was just as uneven with columns, choosing column 0 137 times over 500 boards where a random picker would choose it about 59 times. Given eight options that differed only in their column, it put 0.48 of its probability on column 0, which is rather like someone who always orders the first thing on the menu. It means that when options look alike the answer depends more on the labels than on what they say.</p>
-<figure>
-<svg class="ch" viewBox="0 0 640 270" role="img" aria-labelledby="t d"><title id="t">Which column was picked, against random picking</title><desc id="d">Picks per column 0 to 9: 137, 53, 34, 44, 21, 20, 63, 87, 32, 9. Random picking would give about 59, 57, 58, 57, 57, 55, 54, 52, 43, 8.</desc><line x1="40" x2="630" y1="236.0" y2="236.0" stroke="#e5e9ef"/><text x="34" y="240.0" text-anchor="end">0</text><line x1="40" x2="630" y1="168.7" y2="168.7" stroke="#e5e9ef"/><text x="34" y="172.7" text-anchor="end">50</text><line x1="40" x2="630" y1="101.3" y2="101.3" stroke="#e5e9ef"/><text x="34" y="105.3" text-anchor="end">100</text><line x1="40" x2="630" y1="34.0" y2="34.0" stroke="#e5e9ef"/><text x="34" y="38.0" text-anchor="end">150</text><rect x="47.7" y="51.5" width="20.3" height="184.5" rx="2" fill="#2f5bd8"/><rect x="69.5" y="156.5" width="20.3" height="79.5" rx="2" fill="#c9d1dc"/><text x="69.5" y="258" text-anchor="middle">0</text><rect x="106.7" y="164.6" width="20.3" height="71.4" rx="2" fill="#2f5bd8"/><rect x="128.5" y="159.2" width="20.3" height="76.8" rx="2" fill="#c9d1dc"/><text x="128.5" y="258" text-anchor="middle">1</text><rect x="165.7" y="190.2" width="20.3" height="45.8" rx="2" fill="#2f5bd8"/><rect x="187.5" y="157.9" width="20.3" height="78.1" rx="2" fill="#c9d1dc"/><text x="187.5" y="258" text-anchor="middle">2</text><rect x="224.7" y="176.7" width="20.3" height="59.3" rx="2" fill="#2f5bd8"/><rect x="246.5" y="159.2" width="20.3" height="76.8" rx="2" fill="#c9d1dc"/><text x="246.5" y="258" text-anchor="middle">3</text><rect x="283.7" y="207.7" width="20.3" height="28.3" rx="2" fill="#2f5bd8"/><rect x="305.5" y="159.2" width="20.3" height="76.8" rx="2" fill="#c9d1dc"/><text x="305.5" y="258" text-anchor="middle">4</text><rect x="342.7" y="209.1" width="20.3" height="26.9" rx="2" fill="#2f5bd8"/><rect x="364.5" y="161.9" width="20.3" height="74.1" rx="2" fill="#c9d1dc"/><text x="364.5" y="258" text-anchor="middle">5</text><rect x="401.7" y="151.2" width="20.3" height="84.8" rx="2" fill="#2f5bd8"/><rect x="423.5" y="163.3" width="20.3" height="72.7" rx="2" fill="#c9d1dc"/><text x="423.5" y="258" text-anchor="middle">6</text><rect x="460.7" y="118.8" width="20.3" height="117.2" rx="2" fill="#2f5bd8"/><rect x="482.5" y="166.0" width="20.3" height="70.0" rx="2" fill="#c9d1dc"/><text x="482.5" y="258" text-anchor="middle">7</text><rect x="519.7" y="192.9" width="20.3" height="43.1" rx="2" fill="#2f5bd8"/><rect x="541.5" y="178.1" width="20.3" height="57.9" rx="2" fill="#c9d1dc"/><text x="541.5" y="258" text-anchor="middle">8</text><rect x="578.7" y="223.9" width="20.3" height="12.1" rx="2" fill="#2f5bd8"/><rect x="600.5" y="225.2" width="20.3" height="10.8" rx="2" fill="#c9d1dc"/><text x="600.5" y="258" text-anchor="middle">9</text><rect x="40" y="8" width="11" height="11" rx="2" fill="#2f5bd8"/><text x="56" y="18">what it picked</text><rect x="162" y="8" width="11" height="11" rx="2" fill="#c9d1dc"/><text x="178" y="18">random picking</text></svg>
-<figcaption>How often each column was picked over 500 boards, against what a random picker would give.</figcaption>
-</figure>
+    <h2>5. Suspect: the model's habits</h2>
+    <p>The reason for dropping the column and rotation words came from a separate test, in which I shuffled the options
+      before every question so that position carried no information. A model that reads the options should pick each
+      slot equally often, and this one favoured the early slots. It was just as uneven with columns, choosing column 0
+      137 times over 500 boards where a random picker would choose it about 59 times. Given eight options that differed
+      only in their column, it put 0.48 of its probability on column 0, which is rather like someone who always orders
+      the first thing on the menu. It means that when options look alike the answer depends more on the labels than on
+      what they say.</p>
+    <figure>
+      <svg class="ch" viewBox="0 0 640 270" role="img" aria-labelledby="t d">
+        <title id="t">Which column was picked, against random picking</title>
+        <desc id="d">Picks per column 0 to 9: 137, 53, 34, 44, 21, 20, 63, 87, 32, 9. Random picking would give about
+          59, 57, 58, 57, 57, 55, 54, 52, 43, 8.</desc>
+        <line x1="40" x2="630" y1="236.0" y2="236.0" stroke="#e5e9ef" /><text x="34" y="240.0"
+          text-anchor="end">0</text>
+        <line x1="40" x2="630" y1="168.7" y2="168.7" stroke="#e5e9ef" /><text x="34" y="172.7"
+          text-anchor="end">50</text>
+        <line x1="40" x2="630" y1="101.3" y2="101.3" stroke="#e5e9ef" /><text x="34" y="105.3"
+          text-anchor="end">100</text>
+        <line x1="40" x2="630" y1="34.0" y2="34.0" stroke="#e5e9ef" /><text x="34" y="38.0" text-anchor="end">150</text>
+        <rect x="47.7" y="51.5" width="20.3" height="184.5" rx="2" fill="#2f5bd8" />
+        <rect x="69.5" y="156.5" width="20.3" height="79.5" rx="2" fill="#c9d1dc" /><text x="69.5" y="258"
+          text-anchor="middle">0</text>
+        <rect x="106.7" y="164.6" width="20.3" height="71.4" rx="2" fill="#2f5bd8" />
+        <rect x="128.5" y="159.2" width="20.3" height="76.8" rx="2" fill="#c9d1dc" /><text x="128.5" y="258"
+          text-anchor="middle">1</text>
+        <rect x="165.7" y="190.2" width="20.3" height="45.8" rx="2" fill="#2f5bd8" />
+        <rect x="187.5" y="157.9" width="20.3" height="78.1" rx="2" fill="#c9d1dc" /><text x="187.5" y="258"
+          text-anchor="middle">2</text>
+        <rect x="224.7" y="176.7" width="20.3" height="59.3" rx="2" fill="#2f5bd8" />
+        <rect x="246.5" y="159.2" width="20.3" height="76.8" rx="2" fill="#c9d1dc" /><text x="246.5" y="258"
+          text-anchor="middle">3</text>
+        <rect x="283.7" y="207.7" width="20.3" height="28.3" rx="2" fill="#2f5bd8" />
+        <rect x="305.5" y="159.2" width="20.3" height="76.8" rx="2" fill="#c9d1dc" /><text x="305.5" y="258"
+          text-anchor="middle">4</text>
+        <rect x="342.7" y="209.1" width="20.3" height="26.9" rx="2" fill="#2f5bd8" />
+        <rect x="364.5" y="161.9" width="20.3" height="74.1" rx="2" fill="#c9d1dc" /><text x="364.5" y="258"
+          text-anchor="middle">5</text>
+        <rect x="401.7" y="151.2" width="20.3" height="84.8" rx="2" fill="#2f5bd8" />
+        <rect x="423.5" y="163.3" width="20.3" height="72.7" rx="2" fill="#c9d1dc" /><text x="423.5" y="258"
+          text-anchor="middle">6</text>
+        <rect x="460.7" y="118.8" width="20.3" height="117.2" rx="2" fill="#2f5bd8" />
+        <rect x="482.5" y="166.0" width="20.3" height="70.0" rx="2" fill="#c9d1dc" /><text x="482.5" y="258"
+          text-anchor="middle">7</text>
+        <rect x="519.7" y="192.9" width="20.3" height="43.1" rx="2" fill="#2f5bd8" />
+        <rect x="541.5" y="178.1" width="20.3" height="57.9" rx="2" fill="#c9d1dc" /><text x="541.5" y="258"
+          text-anchor="middle">8</text>
+        <rect x="578.7" y="223.9" width="20.3" height="12.1" rx="2" fill="#2f5bd8" />
+        <rect x="600.5" y="225.2" width="20.3" height="10.8" rx="2" fill="#c9d1dc" /><text x="600.5" y="258"
+          text-anchor="middle">9</text>
+        <rect x="40" y="8" width="11" height="11" rx="2" fill="#2f5bd8" /><text x="56" y="18">what it picked</text>
+        <rect x="162" y="8" width="11" height="11" rx="2" fill="#c9d1dc" /><text x="178" y="18">random picking</text>
+      </svg>
+      <figcaption>How often each column was picked over 500 boards, against what a random picker would give.
+      </figcaption>
+    </figure>
 
-<h2>6. Fewer options and more orderings</h2>
-<p>Because of that habit, the cheapest improvement was to ask several times with the options shuffled and average the answers, which lifted the easy test from 86% with one ordering to 95% with four. The table shows the share of right answers as the number of options grows, and chance falls along with it.</p>
-<table>
-  <tr><th>Options on offer</th><th class="n">Right answers</th><th class="n">Chance</th></tr>
-  <tr><td>2</td><td class="n">74%</td><td class="n">58%</td></tr>
-  <tr><td>3</td><td class="n">58%</td><td class="n">40%</td></tr>
-  <tr><td>4</td><td class="n">52%</td><td class="n">30%</td></tr>
-  <tr><td>6</td><td class="n">39%</td><td class="n">20%</td></tr>
-  <tr><td>8</td><td class="n">32%</td><td class="n">15%</td></tr>
-</table>
-<p>On the real shortlist the model stays between 16 and 22 points above chance from two options to eight, so I think the trouble is mostly in separating close options and less in the length of the list.</p>
+    <h2>6. Fewer options and more orderings</h2>
+    <p>Because of that habit, the cheapest improvement was to ask several times with the options shuffled and average
+      the answers, which lifted the easy test from 86% with one ordering to 95% with four. The table shows the share of
+      right answers as the number of options grows, and chance falls along with it.</p>
+    <table>
+      <tr>
+        <th>Options on offer</th>
+        <th class="n">Right answers</th>
+        <th class="n">Chance</th>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td class="n">74%</td>
+        <td class="n">58%</td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td class="n">58%</td>
+        <td class="n">40%</td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td class="n">52%</td>
+        <td class="n">30%</td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td class="n">39%</td>
+        <td class="n">20%</td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td class="n">32%</td>
+        <td class="n">15%</td>
+      </tr>
+    </table>
+    <p>On the real shortlist the model stays between 16 and 22 points above chance from two options to eight, so I think
+      the trouble is mostly in separating close options and less in the length of the list.</p>
 
-<h2>7. Real games</h2>
-<p>I then played ten real games of at most 150 moves with the improved format and a single question over the eight options, and five games with the pairwise comparisons that had agreed with the heuristic 80% of the time offline.</p>
-<table>
-  <tr><th>Player</th><th class="n">Lines per game</th><th>Moves before the game ended</th></tr>
-  <tr><td>Random pick from the same eight</td><td class="n">0.2</td><td>about 28</td></tr>
-  <tr><td>Laya, one question over eight options</td><td class="n">0.1</td><td>about 32</td></tr>
-  <tr><td>Laya, comparing every pair</td><td class="n">4.2</td><td>about 47</td></tr>
-  <tr><td>The heuristic</td><td class="n">56.4</td><td>no game ended in 150</td></tr>
-</table>
-<p>Comparing pairs got the model some lines, although all five games still ended early, and in the best of them the stack reached the top with the right-hand column still empty. The GIFs below show these games, all played from the same seed so that the pieces arrive in the same order.</p>
-<div class="gifs"><figure><img src="img/random.gif" alt="A Tetris game played by random choice, which fills the board within about thirty moves." loading="lazy"><figcaption>A random pick from the same eight options.</figcaption></figure><figure><img src="img/one-question.gif" alt="A Tetris game played by the untuned model asking one question per piece." loading="lazy"><figcaption>Laya, zero-shot, asked one question over eight options.</figcaption></figure><figure><img src="img/pairwise.gif" alt="A Tetris game played by the untuned model comparing every pair of options." loading="lazy"><figcaption>Laya, zero-shot, comparing every pair of options.</figcaption></figure><figure><img src="img/heuristic.gif" alt="A Tetris game played by the hand-written heuristic, clearing lines steadily." loading="lazy"><figcaption>The heuristic that taught the final model.</figcaption></figure></div>
+    <h2>7. Real games</h2>
+    <p>I then played ten real games of at most 150 moves with the improved format and a single question over the eight
+      options, and five games with the pairwise comparisons that had agreed with the heuristic 80% of the time offline.
+    </p>
+    <table>
+      <tr>
+        <th>Player</th>
+        <th class="n">Lines per game</th>
+        <th>Moves before the game ended</th>
+      </tr>
+      <tr>
+        <td>Random pick from the same eight</td>
+        <td class="n">0.2</td>
+        <td>about 28</td>
+      </tr>
+      <tr>
+        <td>Laya, one question over eight options</td>
+        <td class="n">0.1</td>
+        <td>about 32</td>
+      </tr>
+      <tr>
+        <td>Laya, comparing every pair</td>
+        <td class="n">4.2</td>
+        <td>about 47</td>
+      </tr>
+      <tr>
+        <td>The heuristic</td>
+        <td class="n">56.4</td>
+        <td>no game ended in 150</td>
+      </tr>
+    </table>
+    <p>Comparing pairs got the model some lines, although all five games still ended early, and in the best of them the
+      stack reached the top with the right-hand column still empty. The GIFs below show these games, all played from the
+      same seed so that the pieces arrive in the same order.</p>
+    <div class="gifs">
+      <figure><img src="img/random.gif"
+          alt="A Tetris game played by random choice, which fills the board within about thirty moves." loading="lazy">
+        <figcaption>A random pick from the same eight options.</figcaption>
+      </figure>
+      <figure><img src="img/one-question.gif"
+          alt="A Tetris game played by the untuned model asking one question per piece." loading="lazy">
+        <figcaption>Laya, zero-shot, asked one question over eight options.</figcaption>
+      </figure>
+      <figure><img src="img/pairwise.gif"
+          alt="A Tetris game played by the untuned model comparing every pair of options." loading="lazy">
+        <figcaption>Laya, zero-shot, comparing every pair of options.</figcaption>
+      </figure>
+      <figure><img src="img/heuristic.gif"
+          alt="A Tetris game played by the hand-written heuristic, clearing lines steadily." loading="lazy">
+        <figcaption>The heuristic that taught the final model.</figcaption>
+      </figure>
+    </div>
 
-<h2>8. The original idea: raw moves</h2>
-<p>My original idea was to give the model the board and let it choose raw moves, so I ran that last. At each board position the teacher's next move was a rotation, a step to one side or a drop, and the table gives the share of positions where the model chose the same move, against 14% for guessing and 46% for always choosing drop.</p>
-<table>
-  <tr><th>State shown to the model</th><th class="n">Matches the teacher</th></tr>
-  <tr><td>The word "Tetris" only</td><td class="n">8%</td></tr>
-  <tr><td>Summary only</td><td class="n">6%</td></tr>
-  <tr><td>Summary and the board as letters</td><td class="n">4%</td></tr>
-  <tr><td>Summary and the board as # and .</td><td class="n">6%</td></tr>
-</table>
-<p>The model scored below chance in every version, because it picked rotate or move down almost every time. It never chose left or right in 1,200 tries, so I would expect every piece to come down the middle of the board in a real game.</p>
-<div class="gifs"><figure><img src="img/raw-moves.gif" alt="A Tetris game in which the untuned model chooses raw moves such as rotate and move down." loading="lazy"><figcaption>Laya, zero-shot, choosing raw moves with the board as the state.</figcaption></figure></div>
+    <h2>8. The original idea: raw moves</h2>
+    <p>My original idea was to give the model the board and let it choose raw moves, so I ran that last. At each board
+      position the teacher's next move was a rotation, a step to one side or a drop, and the table gives the share of
+      positions where the model chose the same move, against 14% for guessing and 46% for always choosing drop.</p>
+    <table>
+      <tr>
+        <th>State shown to the model</th>
+        <th class="n">Matches the teacher</th>
+      </tr>
+      <tr>
+        <td>The word "Tetris" only</td>
+        <td class="n">8%</td>
+      </tr>
+      <tr>
+        <td>Summary only</td>
+        <td class="n">6%</td>
+      </tr>
+      <tr>
+        <td>Summary and the board as letters</td>
+        <td class="n">4%</td>
+      </tr>
+      <tr>
+        <td>Summary and the board as # and .</td>
+        <td class="n">6%</td>
+      </tr>
+    </table>
+    <p>The model scored below chance in every version, because it picked rotate or move down almost every time. It never
+      chose left or right in 1,200 tries, so I would expect every piece to come down the middle of the board in a real
+      game.</p>
+    <div class="gifs">
+      <figure><img src="img/raw-moves.gif"
+          alt="A Tetris game in which the untuned model chooses raw moves such as rotate and move down." loading="lazy">
+        <figcaption>Laya, zero-shot, choosing raw moves with the board as the state.</figcaption>
+      </figure>
+    </div>
 
-<h2>9. Reading the documentation</h2>
-<p>At this point I read the documentation, which describes Laya as a fast base to specialise and not a zero-shot decision engine, and which links a <a href="https://huggingface.co/madhavbiplov/laya-snake-mlx">Snake demo</a> that went from roughly 16% accuracy to about 99% after 18 minutes of fine-tuning on a laptop. I had spent a good while building test harnesses to measure a model doing something it was never designed to do, which I would have known if I had read the documentation first.</p>
+    <h2>9. Reading the documentation</h2>
+    <p>At this point I read the documentation, which describes Laya as a fast base to specialise and not a zero-shot
+      decision engine, and which links a <a href="https://huggingface.co/madhavbiplov/laya-snake-mlx">Snake demo</a>
+      that went from roughly 16% accuracy to about 99% after 18 minutes of fine-tuning on a laptop. I had spent a good
+      while building test harnesses to measure a model doing something it was never designed to do, which I would have
+      known if I had read the documentation first.</p>
 
-<h2>10. Fine-tuning</h2>
-<p>The training data came straight from what the experiments had shown. Each row holds a short summary and a table of the eight options with letters, shuffled so that a letter means nothing on its own, and the label is the heuristic's preference turned into probabilities so that near-ties share the weight. Whole games went either to the training set or to the test set, so the test boards are never ones the model has seen. Training was a LoRA fine-tune, which adjusts a small add-on instead of all of the model's weights, run in <a href="https://github.com/biplovgautam/LayaStudio">LayaStudio</a> on my Mac from the same model that had been guessing.<!-- TODO: add rows, epochs and training time from LayaStudio's report --> One row is shown below, where option E clears a line and takes all of the probability.</p>
-<pre><code>Tetris. Piece S, next ZIT, hold none. Stack height 2, holes 0, bumpiness 4. Options:
+    <h2>10. Fine-tuning</h2>
+    <p>The training data came straight from what the experiments had shown. Each row holds a short summary and a table
+      of the eight options with letters, shuffled so that a letter means nothing on its own, and the label is the
+      heuristic's preference turned into probabilities so that near-ties share the weight. Whole games went either to
+      the training set or to the test set, so the test boards are never ones the model has seen. Training was a LoRA
+      fine-tune, which adjusts a small add-on instead of all of the model's weights, run in <a
+        href="https://github.com/biplovgautam/LayaStudio">LayaStudio</a> on my Mac from the same model that had been
+      guessing.<!-- TODO: add rows, epochs and training time from LayaStudio's report --> One row is shown below, where
+      option E clears a line and takes all of the probability.</p>
+    <pre><code>Tetris. Piece S, next ZIT, hold none. Stack height 2, holes 0, bumpiness 4. Options:
 A: clears 0, holes 1, bumpiness 8, height 4
 B: clears 0, holes 1, bumpiness 7, height 5
 C: clears 0, holes 0, bumpiness 5, height 3
@@ -155,20 +572,48 @@ E: clears 1, holes 0, bumpiness 4, height 1
 F: clears 0, holes 1, bumpiness 6, height 3
 G: clears 0, holes 0, bumpiness 8, height 3
 H: clears 0, holes 1, bumpiness 7, height 4</code></pre>
-<table>
-  <tr><th>Player</th><th class="n">Lines per game</th><th>Games that lasted 150 moves</th></tr>
-  <tr><td>Laya after fine-tuning</td><td class="n">56.6</td><td>10 of 10</td></tr>
-  <tr><td>The heuristic</td><td class="n">56.4</td><td>10 of 10</td></tr>
-</table>
-<p>The tuned model chose the same move as the heuristic on nearly every turn and took all 480 of the line clears on offer, so it plays the way its teacher does, as the GIFs show.</p>
-<div class="gifs"><figure><img src="img/tuned.gif" alt="A Tetris game played by the fine-tuned model, clearing lines steadily." loading="lazy"><figcaption>Laya after fine-tuning.</figcaption></figure><figure><img src="img/heuristic.gif" alt="A Tetris game played by the hand-written heuristic, clearing lines steadily." loading="lazy"><figcaption>The heuristic that taught the final model.</figcaption></figure></div>
+    <table>
+      <tr>
+        <th>Player</th>
+        <th class="n">Lines per game</th>
+        <th>Games that lasted 150 moves</th>
+      </tr>
+      <tr>
+        <td>Laya after fine-tuning</td>
+        <td class="n">56.6</td>
+        <td>10 of 10</td>
+      </tr>
+      <tr>
+        <td>The heuristic</td>
+        <td class="n">56.4</td>
+        <td>10 of 10</td>
+      </tr>
+    </table>
+    <p>The tuned model chose the same move as the heuristic on nearly every turn and took all 480 of the line clears on
+      offer, so it plays the way its teacher does, as the GIFs show.</p>
+    <div class="gifs">
+      <figure><img src="img/tuned.gif" alt="A Tetris game played by the fine-tuned model, clearing lines steadily."
+          loading="lazy">
+        <figcaption>Laya after fine-tuning.</figcaption>
+      </figure>
+      <figure><img src="img/heuristic.gif"
+          alt="A Tetris game played by the hand-written heuristic, clearing lines steadily." loading="lazy">
+        <figcaption>The heuristic that taught the final model.</figcaption>
+      </figure>
+    </div>
 
-<h2>11. What this does not show</h2>
-<p>The tuned model matches the heuristic, and since it was trained on the heuristic's opinions it should not be expected to beat it. It also never sees the board, because my code builds the table of options, so what it learned is closer to reading a scoring rule than to playing Tetris. A 150-move game cannot separate the two, because 60 lines is the most anyone could clear. What I still do not know is whether a model could learn to play from the board alone, without my code building the table for it, and that is what I want to try next.</p>
+    <h2>11. What this does not show</h2>
+    <p>The tuned model matches the heuristic, and since it was trained on the heuristic's opinions it should not be
+      expected to beat it. It also never sees the board, because my code builds the table of options, so what it learned
+      is closer to reading a scoring rule than to playing Tetris. A 150-move game cannot separate the two, because 60
+      lines is the most anyone could clear. What I still do not know is whether a model could learn to play from the
+      board alone, without my code building the table for it, and that is what I want to try next.</p>
 
-<hr>
-<footer>The code, model and data are linked at the top of the page and are Apache-2.0. Laya is by Convai Innovations, and the Snake demo and LayaStudio are other people's work.</footer>
+    <hr>
+    <footer>The code, model and data are linked at the top of the page and are Apache-2.0. Laya is by Convai
+      Innovations, and the Snake demo and LayaStudio are other people's work.</footer>
 
-</main>
+  </main>
 </body>
+
 </html>
