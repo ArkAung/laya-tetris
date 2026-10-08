@@ -4,7 +4,7 @@
 question, and answers in a single forward pass with calibrated probabilities. It doesn't generate text. Out of the box it plays
 Tetris like a coin flip. This repo is the record of finding out why, and of the fine-tune that fixed it.
 
-The write-up of the whole journey: **https://YOUR_GITHUB_USER.github.io/laya-tetris/** (source in `docs/`).
+The write-up of the whole journey: **https://arkaung.github.io/laya-tetris/**
 
 ## Result
 
@@ -31,10 +31,10 @@ Read this table with the caveats in mind:
 uv run laya_tetris.py --policy greedy --games 3
 
 # the fine-tuned model (downloads from the Hub)
-uv run laya_tetris.py --model YOUR_HF_USER/laya-tetris-placement --compare letters --games 10 --max-moves 150
+uv run laya_tetris.py --model aaung/laya-tetris-placement --compare letters --games 10 --max-moves 150
 
 # watch it play in your browser (serves the page on http://localhost:8765)
-uv run laya_tetris_ws.py --model YOUR_HF_USER/laya-tetris-placement --compare letters --delay 0.15
+uv run laya_tetris_ws.py --model aaung/laya-tetris-placement --compare letters --delay 0.15
 ```
 
 You can also just open `tetris-env.html` in a browser and play it yourself. The whole game state fits on one line, for example
